@@ -5,7 +5,7 @@ from rover_protos import mars_rover_pb2
 from rover_protos import mars_rover_pb2_grpc
 
 class Coral:
-    def __init__(self, server_address="localhost:50051"):
+    def __init__(self, server_address="192.168.0.169:50051"):
         self.channel = grpc.insecure_channel(server_address)
         self.stub = mars_rover_pb2_grpc.RoverServiceStub(self.channel)
 
@@ -73,16 +73,3 @@ class Coral:
         response = self.stub.CalibrateServo(request)
         print(response.message)
 
-
-
-def serve():
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    mars_rover_pb2_grpc.add_RoverServiceServicer_to_server(Coral(), server)
-    server.add_insecure_port("[::]:50051")
-    server.start()
-    print("Server is running...")
-    server.wait_for_termination()
-
-
-if __name__ == "__main__":
-    serve()

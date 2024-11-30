@@ -1,7 +1,7 @@
 import grpc
 from concurrent import futures
-from protos import mars_rover_pb2
-from protos import mars_rover_pb2_grpc
+from rover_protos import mars_rover_pb2
+from rover_protos import mars_rover_pb2_grpc
 
 
 
