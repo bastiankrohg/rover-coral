@@ -1,4 +1,6 @@
 import grpc
+from concurrent import futures
+
 from rover_protos import mars_rover_pb2
 from rover_protos import mars_rover_pb2_grpc
 
@@ -70,3 +72,17 @@ class Coral:
         request = mars_rover_pb2.RotateRequest(angle=angle)
         response = self.stub.CalibrateServo(request)
         print(response.message)
+
+
+
+def serve():
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+    mars_rover_pb2_grpc.add_RoverServiceServicer_to_server(Coral(), server)
+    server.add_insecure_port("[::]:50051")
+    server.start()
+    print("Server is running...")
+    server.wait_for_termination()
+
+
+if __name__ == "__main__":
+    serve()
