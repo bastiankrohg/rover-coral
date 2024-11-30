@@ -1,6 +1,6 @@
 import grpc
-import mars_rover_pb2
-import mars_rover_pb2_grpc
+from rover_protos import mars_rover_pb2
+from rover_protos import mars_rover_pb2_grpc
 
 class Coral:
     def __init__(self, server_address="localhost:50051"):
