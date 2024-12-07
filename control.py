@@ -13,27 +13,27 @@ stop_loop = False  # Flag to stop the continuous processing loop
 def handle_combined_keys():
     """Handle simultaneous key presses to send appropriate gRPC commands."""
     if "w" in pressed_keys and "d" in pressed_keys:  # Forward + Turn Right
-        coral.turn_right(angle=5)
-        coral.drive_forward(speed=50)
+        coral.turn_right(angle=3)
+        coral.drive_forward(speed=15)
     elif "w" in pressed_keys and "a" in pressed_keys:  # Forward + Turn Left
-        coral.turn_left(angle=5)
-        coral.drive_forward(speed=50)
+        coral.turn_left(angle=3)
+        coral.drive_forward(speed=15)
     elif "s" in pressed_keys and "d" in pressed_keys:  # Reverse + Turn Right
-        coral.turn_right(angle=5)
-        coral.reverse(speed=50)
+        coral.turn_right(angle=3)
+        coral.reverse(speed=15)
     elif "s" in pressed_keys and "a" in pressed_keys:  # Reverse + Turn Left
-        coral.turn_left(angle=5)
-        coral.reverse(speed=50)
+        coral.turn_left(angle=3)
+        coral.reverse(speed=15)
     else:
         # Handle individual movement keys
         if "w" in pressed_keys:
-            coral.drive_forward(speed=50)
+            coral.drive_forward(speed=15)
         if "s" in pressed_keys:
-            coral.reverse(speed=50)
+            coral.reverse(speed=15)
         if "a" in pressed_keys:
-            coral.rotate_on_spot(angle=-15)
+            coral.rotate_on_spot(angle=-5)
         if "d" in pressed_keys:
-            coral.rotate_on_spot(angle=15)
+            coral.rotate_on_spot(angle=5)
 
 def on_press(key):
     """Handle key press events."""
