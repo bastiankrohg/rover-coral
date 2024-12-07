@@ -31,9 +31,9 @@ def handle_combined_keys():
         if "s" in pressed_keys:
             coral.reverse(speed=15)
         if "a" in pressed_keys:
-            coral.rotate_on_spot(angle=-5)
+            coral.turn_on_spot(angle=-5)
         if "d" in pressed_keys:
-            coral.rotate_on_spot(angle=5)
+            coral.turn_on_spot(angle=5)
 
 def on_press(key):
     """Handle key press events."""

@@ -35,9 +35,9 @@ class Coral:
         response = self.mapping_stub.TurnRight(request)  # Use mapping_stub
         print(response.message)
 
-    def rotate_on_spot(self, angle):
+    def turn_on_spot(self, angle):
         request = mars_rover_pb2.TurnRequest(angle=angle)
-        response = self.mapping_stub.RotateOnSpot(request)  # Use mapping_stub
+        response = self.mapping_stub.TurnOnSpot(request)  # Use mapping_stub
         print(response.message)
 
     def stop_movement(self):
