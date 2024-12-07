@@ -78,13 +78,33 @@ class Coral:
         response = self.mapping_stub.CalibrateServo(request)  # Use mapping_stub
         print(response.message)
 
-    # === Resource and Obstacle Placement ===
-    def place_resource(self, distance):
-        request = mars_rover_pb2.RotateRequest(angle=distance)
-        response = self.mapping_stub.PlaceResource(request)
+    # === Mapping ===
+    def map_resource(self, distance=None, size=1.0, object_label="Undefined"):
+        """Map a resource with optional object and distance."""
+        if not distance:
+            distance = self.get_ultrasound_measurement()
+        request = mars_rover_pb2.ResourceObstacleRequest(
+            distance=distance, size=size, object=object_label
+        )
+        response = self.mapping_stub.MapResource(request)
         print(response.message)
 
-    def place_obstacle(self, distance):
-        request = mars_rover_pb2.RotateRequest(angle=distance)
-        response = self.mapping_stub.PlaceObstacle(request)
+    def map_obstacle(self, distance=None, size=1.0, object_label="Undefined"):
+        """Map an obstacle with optional object and distance."""
+        if not distance:
+            distance = self.get_ultrasound_measurement()
+        request = mars_rover_pb2.ResourceObstacleRequest(
+            distance=distance, size=size, object=object_label
+        )
+        response = self.mapping_stub.MapObstacle(request)
+        print(response.message)
+
+    def toggle_resource_list(self):
+        request = mars_rover_pb2.CommandResponse()  # No specific data needed for toggling
+        response = self.mapping_stub.ToggleResourceList(request)
+        print(response.message)
+
+    def toggle_obstacle_list(self):
+        request = mars_rover_pb2.CommandResponse()  # No specific data needed for toggling
+        response = self.mapping_stub.ToggleObstacleList(request)
         print(response.message)

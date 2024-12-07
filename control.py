@@ -9,9 +9,6 @@ coral = Coral()
 # Track pressed keys
 pressed_keys = set()
 stop_loop = False  # Flag to stop the continuous processing loop
-resource_list_displayed = False  # Toggle state for resource list
-obstacle_list_displayed = False  # Toggle state for obstacle list
-
 
 def handle_combined_keys():
     """Handle simultaneous key presses to send appropriate gRPC commands."""
@@ -38,10 +35,9 @@ def handle_combined_keys():
         if "d" in pressed_keys:
             coral.turn_on_spot(angle=-5)
 
-
 def on_press(key):
     """Handle key press events."""
-    global stop_loop, resource_list_displayed, obstacle_list_displayed
+    global stop_loop
 
     try:
         # Handle alphanumeric keys
@@ -52,28 +48,29 @@ def on_press(key):
 
         # Specific actions for non-char keys
         if key == Key.tab:
-            resource_list_displayed = not resource_list_displayed
-            print("Resource list display toggled:", resource_list_displayed)
+            print("Toggling resource list display.")
+            coral.toggle_resource_list()
         elif key == Key.space:
-            obstacle_list_displayed = not obstacle_list_displayed
-            print("Obstacle list display toggled:", obstacle_list_displayed)
+            print("Toggling obstacle list display.")
+            coral.toggle_obstacle_list()
         elif key == Key.esc:
             print("Exiting...")
             stop_loop = True
             return False  # Stop listener
 
-        # Resource and obstacle placement
+        # Handle resource and obstacle placement
         if "o" in pressed_keys:
-            coral.place_resource(distance=10)
+            print("Placing resource...")
+            coral.map_resource(distance=10, size=5)
         if "p" in pressed_keys:
-            coral.place_obstacle(distance=10)
+            print("Placing obstacle...")
+            coral.map_obstacle(distance=15, size=7)
 
         # Handle simultaneous actions
         handle_combined_keys()
 
     except Exception as e:
         print(f"Error in on_press: {e}")
-
 
 def on_release(key):
     """Handle key release events."""
@@ -91,7 +88,6 @@ def on_release(key):
     except Exception as e:
         print(f"Error in on_release: {e}")
 
-
 def process_keys():
     """Continuously process key states for combined and individual actions."""
     global stop_loop
@@ -101,12 +97,10 @@ def process_keys():
             handle_combined_keys()
         time.sleep(0.1)  # Process every 100ms to prevent high CPU usage
 
-
 # Start listener thread
 def start_listener():
     with Listener(on_press=on_press, on_release=on_release) as listener:
         listener.join()
-
 
 # Manage threads
 listener_thread = threading.Thread(target=start_listener)
