@@ -77,3 +77,14 @@ class Coral:
         request = mars_rover_pb2.RotateRequest(angle=angle)
         response = self.mapping_stub.CalibrateServo(request)  # Use mapping_stub
         print(response.message)
+
+    # === Resource and Obstacle Placement ===
+    def place_resource(self, distance):
+        request = mars_rover_pb2.RotateRequest(angle=distance)
+        response = self.mapping_stub.PlaceResource(request)
+        print(response.message)
+
+    def place_obstacle(self, distance):
+        request = mars_rover_pb2.RotateRequest(angle=distance)
+        response = self.mapping_stub.PlaceObstacle(request)
+        print(response.message)
