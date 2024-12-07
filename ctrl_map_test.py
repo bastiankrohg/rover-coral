@@ -1,5 +1,5 @@
 import platform
-from coral_map_test import Coral
+from testing.coral_map_test import Coral
 
 if platform.system() == "Darwin":  # Darwin is the system name for macOS
     from pynput import keyboard  # Use pynput for macOS
