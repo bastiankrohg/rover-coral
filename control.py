@@ -34,6 +34,10 @@ def handle_combined_keys():
             coral.turn_on_spot(angle=5)
         if "d" in pressed_keys:
             coral.turn_on_spot(angle=-5)
+        if "q" in pressed_keys:  # Rotate mast left
+            coral.rotate_periscope(angle=5)
+        if "e" in pressed_keys:  # Rotate mast right
+            coral.rotate_periscope(angle=-5)
 
 def on_press(key):
     """Handle key press events."""
@@ -61,10 +65,14 @@ def on_press(key):
         # Handle resource and obstacle placement
         if "o" in pressed_keys:
             print("Placing resource...")
-            coral.map_resource(distance=10, size=5)
+            # Fetch ultrasound measurement for dynamic distance
+            distance = coral.get_ultrasound_measurement()
+            coral.map_resource(distance=distance, size=5)
         if "p" in pressed_keys:
             print("Placing obstacle...")
-            coral.map_obstacle(distance=15, size=15)
+            # Fetch ultrasound measurement for dynamic distance
+            distance = coral.get_ultrasound_measurement()
+            coral.map_obstacle(distance=distance, size=15)
 
         # Handle simultaneous actions
         handle_combined_keys()

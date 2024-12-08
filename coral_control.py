@@ -50,6 +50,7 @@ class Coral:
         request = mars_rover_pb2.UltrasoundRequest()
         response = self.ultrasound_stub.GetUltrasoundMeasurement(request)  # Use ultrasound_stub
         print(f"Ultrasound Measurement: {response.distance} cm")
+        return response.distance
 
     def get_light_intensity(self):
         request = mars_rover_pb2.LightIntensityRequest()
