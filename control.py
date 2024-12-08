@@ -64,7 +64,7 @@ def on_press(key):
             coral.map_resource(distance=10, size=5)
         if "p" in pressed_keys:
             print("Placing obstacle...")
-            coral.map_obstacle(distance=15, size=7)
+            coral.map_obstacle(distance=15, size=15)
 
         # Handle simultaneous actions
         handle_combined_keys()
