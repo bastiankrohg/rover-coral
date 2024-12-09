@@ -9,6 +9,7 @@ coral = Coral()
 # Track pressed keys
 pressed_keys = set()
 stop_loop = False  # Flag to stop the continuous processing loop
+scanning_enabled = False
 
 def handle_combined_keys():
     """Handle simultaneous key presses to send appropriate gRPC commands."""
@@ -73,6 +74,11 @@ def on_press(key):
             # Fetch ultrasound measurement for dynamic distance
             distance = coral.get_ultrasound_measurement()
             coral.map_obstacle(distance=distance, size=15)
+
+        if key.char == "t":
+            global scanning_enabled
+            scanning_enabled = not scanning_enabled
+            coral.toggle_scan()
 
         # Handle simultaneous actions
         handle_combined_keys()

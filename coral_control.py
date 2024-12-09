@@ -109,3 +109,11 @@ class Coral:
         request = mars_rover_pb2.CommandResponse()  # No specific data needed for toggling
         response = self.mapping_stub.ToggleObstacleList(request)
         print(response.message)
+
+    def toggle_scan(self):
+        """
+        Send a gRPC request to toggle scanning.
+        """
+        request = mars_rover_pb2.CommandResponse()  # No specific data needed for toggling
+        response = self.mapping_stub.ToggleScan(request)
+        print(response.message)
