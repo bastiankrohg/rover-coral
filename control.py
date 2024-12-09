@@ -1,4 +1,4 @@
-from pynput.keyboard import Listener, Key
+from pynput.keyboard import Listener, Key # type: ignore
 import time
 import threading
 from coral_control import Coral
