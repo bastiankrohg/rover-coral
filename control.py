@@ -80,6 +80,9 @@ def on_press(key):
             scanning_enabled = not scanning_enabled
             coral.toggle_scan()
 
+        if key.char == "m":
+            coral.save_map("latest.json")
+
         # Handle simultaneous actions
         handle_combined_keys()
 

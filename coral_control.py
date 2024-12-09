@@ -117,3 +117,8 @@ class Coral:
         request = mars_rover_pb2.CommandResponse()  # No specific data needed for toggling
         response = self.mapping_stub.ToggleScan(request)
         print(response.message)
+
+    def save_map(self, file_name):
+        request = mars_rover_pb2.SaveMapRequest(file_name=file_name)
+        response = self.mapping_stub.SaveMap(request)
+        print(response.message)
