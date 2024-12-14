@@ -29,25 +29,55 @@ class Coral:
         response = self.pi_stub.Reverse(request)
         print(response.message)
 
-    def turn_left(self, angle):
-        request = mars_rover_pb2.TurnRequest(angle=angle)
+    def move_distance(self, distance_cm, speed):
+        """Move the rover forward/backward by a specified distance."""
+        request = mars_rover_pb2.MoveDistanceRequest(distance=distance_cm, speed=speed)
+        response = self.pi_stub.MoveDistance(request)
+        print(response.message)
+
+    def brake(self):
+        """Send a command to activate the rover's braking."""
+        request = mars_rover_pb2.StopRequest()  # No arguments required
+        response = self.pi_stub.Brake(request)  # Call the Pi gRPC stub
+        print(response.message)
+
+    def turn_left(self, speed):
+        request = mars_rover_pb2.TurnRequest(speed=speed)
         # Call mapping and pi stubs
         self.mapping_stub.TurnLeft(request)
         response = self.pi_stub.TurnLeft(request)
         print(response.message)
 
-    def turn_right(self, angle):
-        request = mars_rover_pb2.TurnRequest(angle=angle)
+    def turn_right(self, speed):
+        request = mars_rover_pb2.TurnRequest(speed=speed)
         # Call mapping and pi stubs
         self.mapping_stub.TurnRight(request)
         response = self.pi_stub.TurnRight(request)
         print(response.message)
 
-    def turn_on_spot(self, angle):
-        request = mars_rover_pb2.TurnRequest(angle=angle)
+    def turn_on_spot(self, speed):
+        request = mars_rover_pb2.TurnRequest(speed=speed)
         # Call mapping and pi stubs
         self.mapping_stub.TurnOnSpot(request)
         response = self.pi_stub.TurnOnSpot(request)
+        print(response.message)
+
+    def spin_angle(self, angle):
+        """Spinning in place by an angle"""
+        request = mars_rover_pb2.SpinRequest(angle=angle)
+        response = self.pi_stub.SpinAngle(request)
+        print(response.message)
+    
+    def turn_angle_forward(self, angle, speed=50):
+        """Turning forward while adjusting the angle"""
+        request = mars_rover_pb2.TurnRequest(angle=angle, speed=speed)
+        response = self.pi_stub.TurnAngleForward(request)
+        print(response.message)
+
+    def turn_angle_backward(self, angle, speed=50):
+        """Turning backward while adjusting the angle"""
+        request = mars_rover_pb2.TurnRequest(angle=angle, speed=speed)
+        response = self.pi_stub.TurnAngleBackward(request)
         print(response.message)
 
     def stop_movement(self):
