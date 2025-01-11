@@ -17,7 +17,7 @@ def main():
     """
     # Define environment settings
     obstacles = [(5, 5), (5, 6), (6, 5), (10, 10), (10, 11), (11, 10)]  # Some obstacles
-    resources = [(15, 15), (18, 18)]  # Resource positions
+    resources = [(-5,-5), (15, 15), (18, 18)]  # Resource positions
     start_position = (0, 0)  # Starting position of the rover
 
     # Initialize the environment

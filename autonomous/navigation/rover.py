@@ -36,30 +36,36 @@ class Rover:
             print(f"Traveled Path: {self.traveled_path}")
 
     def move_to(self, waypoint):
-        print(f"Moving to {waypoint}...")
+        """
+        Move toward a waypoint with smooth transitions.
+        """
+        print(f"Moving to waypoint: {waypoint}...")
         target_position = np.array(waypoint, dtype='float64')
         direction = target_position - self.position
         distance = np.linalg.norm(direction)
 
-        if distance > 0:
+        while distance > 0.5:  # Threshold for reaching the waypoint
+            # Calculate step and update heading
             step = direction / distance * self.nominal_speed * 0.1
-            steps = int(distance // np.linalg.norm(step))
+            angle_to_target = math.atan2(direction[1], direction[0])
+            angle_diff = angle_to_target - self.heading
+            self.heading += np.clip(angle_diff, -self.turning_speed, self.turning_speed)
 
-            for _ in range(steps):
-                next_position = self.position + step
-                if self.is_within_bounds(next_position) and not self.is_collision(next_position):
-                    self.position = next_position
-                    self.traveled_path.append(tuple(np.floor(self.position).astype(int)))
-                    self.total_distance_traveled += np.linalg.norm(step)
-                else:
-                    print("Movement blocked by obstacle or boundary.")
-                    break
+            # Smooth movement
+            next_position = self.position + step
+            if self.is_within_bounds(next_position) and not self.is_collision(next_position):
+                self.position = next_position
+                self.traveled_path.append(tuple(np.floor(self.position).astype(int)))
+                self.total_distance_traveled += np.linalg.norm(step)
+            else:
+                print("Blocked by obstacle or boundary.")
+                break
 
-            self.position = target_position
-            self.traveled_path.append(tuple(np.floor(self.position).astype(int)))
-            self.total_distance_traveled += distance
+            # Update direction and distance
+            direction = target_position - self.position
+            distance = np.linalg.norm(direction)
 
-        print(f"Arrived at {waypoint}. Total distance traveled: {self.total_distance_traveled:.2f}.")
+        print(f"Arrived at waypoint: {waypoint}.")
 
     def perform_360_scan(self):
         """
@@ -90,10 +96,13 @@ class Rover:
         """
         Explore surroundings using a search pattern and obstacle avoidance.
         """
-        print("No resources detected. Generating search pattern...")
+        print("Generating search pattern...")
         pattern = self.generate_expanding_square_pattern()
+        print(f"Search pattern: {pattern}")
 
         for waypoint in pattern:
+            print(f"Current mode: {'search' if self.mode == 'search' else 'resource detected'}")
+            print(f"Attempting to move to waypoint: {waypoint}")
             if waypoint in self.obstacles:
                 print(f"Waypoint {waypoint} blocked by obstacle. Modifying path...")
                 continue  # Skip obstacle or recompute path
@@ -142,35 +151,33 @@ class Rover:
     
     def navigate_to_waypoints(self, waypoints, threshold=1.0):
         """
-        Navigate to a series of waypoints with a completion threshold.
-
-        Parameters:
-        - waypoints: List of (x, y) waypoints to navigate to.
-        - threshold: Distance within which the waypoint is considered reached.
+        Navigate through a series of waypoints with improved handling for blocked paths.
         """
         for waypoint in waypoints:
             print(f"Navigating to waypoint: {waypoint}")
 
-            # Check if already within the threshold distance
+            # Check if already within the threshold
             if self._distance_to(waypoint) <= threshold:
                 print(f"Waypoint {waypoint} already reached (within {threshold} units).")
                 continue
 
             # Calculate path using A*
-            path = a_star(tuple(self.position), waypoint, self.obstacles, self.grid_size)
+            path = a_star(tuple(np.floor(self.position).astype(int)), waypoint, self.obstacles, self.grid_size)
 
             if not path:
-                print(f"Unable to find a path to waypoint {waypoint}. Skipping.")
+                print(f"No path found from {self.position} to {waypoint}. Skipping...")
                 continue
 
-            # Move along the calculated path
+            # Follow the calculated path
             for step in path:
                 self.move_to(step)
                 if self._distance_to(waypoint) <= threshold:
-                    print(f"Waypoint {waypoint} reached (within {threshold} units).")
+                    print(f"Reached waypoint: {waypoint}")
                     break
 
-            print(f"Arrived at waypoint: {waypoint}")
+            print(f"Finished navigating to waypoint: {waypoint}")
+        print(f"Waypoints: {waypoints}")
+        print(f"Obstacles: {self.obstacles}")
     
     def navigate_to_resource(self, resource):
         """

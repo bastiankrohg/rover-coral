@@ -130,6 +130,8 @@ def a_star_occupancy(start, goal, occupancy_map, grid_size):
     Returns:
     - List of (x, y) points representing the path, or an empty list if no path is found.
     """
+    print(f"Starting A* from {start} to {goal}")
+
     neighbors = [
         (0, 1), (1, 0), (0, -1), (-1, 0),  # Cardinal directions
         (1, 1), (1, -1), (-1, 1), (-1, -1)  # Diagonal directions
@@ -192,6 +194,9 @@ def a_star_occupancy(start, goal, occupancy_map, grid_size):
                 g_score[neighbor] = tentative_g_score
                 f_score[neighbor] = tentative_g_score + heuristic(neighbor, goal)
                 heapq.heappush(open_set, (f_score[neighbor], neighbor))
+
+        #print(f"Open set: {open_set}")
+        #print(f"Current position: {current}")
 
     print(f"No path found from {start} to {goal}")
     return []  # Return an empty path if no solution exists

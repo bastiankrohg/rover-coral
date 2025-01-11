@@ -46,15 +46,15 @@ class Visualizer:
         """
         self.fig.canvas.draw()
         self.background = self.fig.canvas.copy_from_bbox(self.fig.bbox)
-
+    
     def update(self, rover_position, traveled_path, search_pattern=None):
         """
         Update the plot with the rover's current position and path.
 
         Parameters:
-        - rover_position: Current (x, y) position of the rover.
-        - traveled_path: List of (x, y) positions the rover has visited.
-        - search_pattern: Optional list of (x, y) points for search visualization.
+        - rover_position: Current position of the rover as a (x, y) tuple or numpy array.
+        - traveled_path: List of (x, y) points representing the rover's traveled path.
+        - search_pattern: Optional list of (x, y) points for the current search pattern.
         """
         if self.background is None:
             raise RuntimeError("Call initialize_plot() before update().")
@@ -81,7 +81,7 @@ class Visualizer:
 
         # Blit the updated area
         self.fig.canvas.blit(self.fig.bbox)
-        plt.pause(0.1)
+        plt.pause(0.01)
 
     def display_final(self):
         """
