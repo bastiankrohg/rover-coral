@@ -1,17 +1,21 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import time
+import math
 from path_generator import generate_sine_wave, generate_expanding_square
-
+from movement_commands import calculate_commands
+from commands import Command
 
 class PathFollower:
-    def __init__(self, path, look_ahead_distance=2.0, grid_size=(50, 50)):
+    def __init__(self, path, look_ahead_distance=2.0, grid_size=(50, 50), initial_heading=0.0):
         self.path = path
         self.current_position = np.array(path[0], dtype="float64")
         self.grid_size = grid_size
         self.traveled_path = [tuple(self.current_position)]
         self.look_ahead_distance = look_ahead_distance
         self.current_index = 0
+        self.current_heading = initial_heading  # Initialize the current heading
+        self.commands = []
 
     def move_along_path(self, speed=1.0, pause=0.1):
         """
@@ -94,8 +98,61 @@ class PathFollower:
 
         print("Path following complete.")
 
+    def generate_and_execute_commands(self):
+        """
+        Generate movement commands for the path and simulate execution.
+        """
+        self.commands = calculate_commands(tuple(self.current_position), self.current_heading, self.path[1:])
+        print("Generated Commands:")
+        for command, value in self.commands:
+            print(f"{command} {value:.2f}")
+
+        self.execute_commands()
+
+    def execute_commands(self):
+        """
+        Simulate the execution of movement commands.
+        """
+        print("Executing commands")
+        for command, value in self.commands:
+            if command == Command.FORWARD:
+                self.move_forward(value)
+            elif command == Command.TURN_LEFT:
+                self.turn(value)
+            elif command == Command.TURN_RIGHT:
+                self.turn(-value)
+            elif command == Command.STOP:
+                print("Rover stopped.")
+
+    def move_forward(self, distance):
+        direction = np.array([math.cos(self.current_heading), math.sin(self.current_heading)])
+        steps = int(distance)
+        for _ in range(steps):
+            self.current_position += direction
+            self.traveled_path.append(tuple(self.current_position))
+            self.visualize()
+
+    def turn(self, angle):
+        self.current_heading = (self.current_heading + angle) % (2 * math.pi)
+
+def test_path_follower_with_commands():
+    """
+    Test the PathFollower with command generation and execution.
+    """
+    expanding_square_path = generate_expanding_square(center=(0, 0), distance=5, max_side_length=6)
+
+    follower = PathFollower(expanding_square_path)
+    plt.ion()
+    plt.figure(figsize=(10, 10))
+    follower.visualize()
+
+    follower.generate_and_execute_commands()
+    plt.ioff()
+    plt.show()
 
 
+if __name__ == "__main__":
+    test_path_follower_with_commands()
 
 def test_path_follower():
     """
@@ -121,7 +178,3 @@ def test_path_follower():
     follower.move_along_path(speed=0.5, pause=0.1)
     plt.ioff()
     plt.show()
-
-
-if __name__ == "__main__":
-    test_path_follower()
