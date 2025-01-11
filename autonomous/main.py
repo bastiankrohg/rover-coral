@@ -4,6 +4,14 @@ from visualization.plotter import Visualizer
 from algorithms.a_star import a_star
 import time
 
+from navigation.config.config import (
+    REAL_WORLD_SCALE,
+    EXPANDING_SQUARE_DISTANCE,
+    MAX_SQUARE_SIDE_LENGTH,
+    SINE_WAVE_AMPLITUDE,
+    SINE_WAVE_WAVELENGTH,
+    SINE_WAVE_NUM_POINTS
+)
 
 def main():
     # Initialize the environment
