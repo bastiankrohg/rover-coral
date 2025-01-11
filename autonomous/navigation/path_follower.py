@@ -108,8 +108,8 @@ class PathFollower:
         print("Path following complete.")
 
     def move_with_pure_pursuit_obstacle_avoidance(
-            self, speed=1.0, pause=0.1, obstacle_positions=None, detection_radius=1.5, replan_function=None
-        ):
+        self, speed=1.0, pause=0.1, obstacle_positions=None, detection_radius=1.5, replan_function=None, grid_size=(50, 50)
+    ):
         """
         Moves the rover along the path using the pure pursuit algorithm with obstacle avoidance.
 
@@ -118,7 +118,8 @@ class PathFollower:
         - pause (float): Pause between updates (for visualization).
         - obstacle_positions (list of tuples): List of obstacle coordinates.
         - detection_radius (float): Radius to detect obstacles.
-        - replan_function (callable): Function to replan path. Takes (current_position, target, obstacles).
+        - replan_function (callable): Function to replan path. Takes (current_position, target, obstacles, grid_size).
+        - grid_size (tuple): The size of the grid as (width, height).
 
         Returns:
         - None
@@ -133,7 +134,9 @@ class PathFollower:
                     self.visualize(obstacles=obstacle_positions)  # Visualize obstacles dynamically
 
                     if replan_function:
-                        new_path = replan_function(tuple(self.current_position), waypoint, obstacle_positions)
+                        new_path = replan_function(
+                            tuple(self.current_position), waypoint, obstacle_positions, grid_size
+                        )
                         if new_path:
                             print(f"Replanned path: {new_path}")
                             self.path = new_path + self.path[self.path.index(waypoint) + 1:]
@@ -157,7 +160,7 @@ class PathFollower:
                 time.sleep(pause)
 
         print("Path following with obstacle avoidance complete.")
-
+        
     def move_with_pure_pursuit_and_commands(self, speed=1.0, pause=0.1):
         """
         Move along the path using Pure Pursuit while emitting commands.
