@@ -9,61 +9,63 @@ class Visualizer:
         self.grid_size = grid_size
         self.obstacles = obstacles
         self.resources = resources
-        self.fig, self.ax = plt.subplots()
+        self.fig, self.ax = plt.subplots(figsize=(10, 10))
         self._setup_plot()
+        self.rover, = self.ax.plot([], [], 'ro', markersize=8)  # Red circle for the rover
+        self.path_line, = self.ax.plot([], [], linestyle='-', color='red')  # Traveled path
+        self.background = None
 
     def _setup_plot(self):
         self.ax.set_xlim(0, self.grid_size[0])
         self.ax.set_ylim(0, self.grid_size[1])
-        self.ax.set_aspect('equal')
+        self.ax.set_aspect('equal', adjustable='box')
         self.ax.grid(True)
-        self._plot_obstacles()
-        self._plot_resources()
 
-    def _plot_obstacles(self):
+        # Plot obstacles
         for obs in self.obstacles:
-            rect = patches.Rectangle((obs[0], obs[1]), 1, 1, facecolor='gray')
-            self.ax.add_patch(rect)
+            self.ax.add_patch(plt.Rectangle(obs, 1, 1, color='black'))
 
-    def _plot_resources(self):
+        # Plot resources
         for res in self.resources:
-            circle = patches.Circle((res[0] + 0.5, res[1] + 0.5), 0.3, facecolor='green')
-            self.ax.add_patch(circle)
+            self.ax.add_patch(plt.Rectangle(res, 1, 1, color='green'))
 
-    def plot_path(self, path, color='red'):
-        if path:
-            x, y = zip(*path)
-            self.ax.plot(x, y, linestyle='--', color=color, marker='o')
+    def initialize_plot(self):
+        """
+        Draw the initial plot and cache the background for blitting.
+        """
+        self.fig.canvas.draw()
+        self.background = self.fig.canvas.copy_from_bbox(self.fig.bbox)
 
-    def plot_rover(self, position, heading, size):
-        x, y = position
-        width = size
-        height = size * 0.5
+    def update(self, rover_position, traveled_path, search_pattern=None):
+        """
+        Update the plot with the rover's current position and path.
+        """
+        if self.background is None:
+            raise RuntimeError("Call initialize_plot() before update().")
 
-        # Create a rectangle to represent the rover
-        rover_body = patches.Rectangle(
-            (x - width / 2, y - height / 2),
-            width,
-            height,
-            angle=np.degrees(heading),
-            edgecolor='blue',
-            facecolor='none'
-        )
-        self.ax.add_patch(rover_body)
+        # Restore the cached background
+        self.fig.canvas.restore_region(self.background)
 
-        # Plot heading direction
-        head_x = x + (width / 2) * np.cos(heading)
-        head_y = y + (width / 2) * np.sin(heading)
-        self.ax.plot([x, head_x], [y, head_y], color='blue')
+        # Update search pattern if provided
+        if search_pattern:
+            for point in search_pattern:
+                self.ax.add_patch(plt.Circle((point[0] + 0.5, point[1] + 0.5), 0.2, color='yellow', alpha=0.5))
 
-    def update(self, rover, optimal_path):
-        self.ax.clear()
-        self._setup_plot()
-        self.plot_path(optimal_path, color='red')
-        self.plot_path(rover.traveled_path, color='blue')
-        self.plot_rover(rover.position, rover.heading, rover.size)
-        plt.draw()
-        plt.pause(0.01)
+        # Update the rover's position
+        self.rover.set_data([rover_position[0] + 0.5], [rover_position[1] + 0.5])
+
+        # Update the traveled path
+        if traveled_path:
+            x, y = zip(*traveled_path)
+            self.path_line.set_data(x, y)
+
+        # Redraw only the updated artists
+        self.ax.draw_artist(self.rover)
+        self.ax.draw_artist(self.path_line)
+
+        # Blit the updated area
+        self.fig.canvas.blit(self.fig.bbox)
+        plt.pause(0.1)
 
     def display_final(self):
         """

@@ -3,7 +3,7 @@
 import time
 import math
 import numpy as np
-from algorithms import a_star
+from algorithms.a_star import a_star
 
 class Rover:
     def __init__(self, start_position, grid_size, obstacles, resources, size=1.0, nominal_speed=1.0, turn_radius=1.0, turning_speed=np.pi/4):
@@ -18,8 +18,22 @@ class Rover:
         self.heading = 0.0  # In radians; 0 means facing right
         self.traveled_path = [tuple(self.position)]
         self.optimal_path = []
-        self.resource_registry = set()  # Track detected resources
-        self.total_distance_traveled = 0.0  # Track total distance traveled
+        self.resource_registry = set()
+        self.verified_resources = []
+        self.total_distance_traveled = 0.0
+        self.fov_angle = np.pi / 4  # 45 degrees
+
+    def report_state(self):
+            """
+            Report the initial state of the rover.
+            """
+            print("Rover System State:")
+            print(f"Position: {self.position}")
+            print(f"Heading: {np.degrees(self.heading)} degrees")
+            print(f"Grid size: {self.grid_size}")
+            print(f"Obstacles: {self.obstacles}")
+            print(f"Resources: {self.resources}")
+            print(f"Traveled Path: {self.traveled_path}")
 
     def move_to(self, waypoint):
         print(f"Moving to {waypoint}...")
@@ -48,22 +62,46 @@ class Rover:
         print(f"Arrived at {waypoint}. Total distance traveled: {self.total_distance_traveled:.2f}.")
 
     def perform_360_scan(self):
-        print("Performing 360-degree scan...")
+        """
+        Perform a 360-degree scan in 45-degree increments.
+        """
+        print("Starting 360-degree scan...")
         detected_resources = []
+        for step in range(8):
+            self.heading = (self.heading + np.pi / 4) % (2 * np.pi)  # Increment by 45 degrees
+            print(f"Scanning at heading: {np.degrees(self.heading):.1f} degrees")
 
-        for dx in range(-1, 2):  # Check in a 3x3 grid around the rover
-            for dy in range(-1, 2):
-                if (dx, dy) == (0, 0):
-                    continue  # Skip the rover's current position
+            # Simulate ultrasound measurement
+            print(f"Ultrasound measurement: Simulated distance to object.")
 
-                scan_position = (int(self.position[0] + dx), int(self.position[1] + dy))
+            # Simulate picture capture
+            print(f"Picture taken at heading {np.degrees(self.heading):.1f} degrees.")
 
-                if scan_position in self.resources and scan_position not in self.resource_registry:
-                    detected_resources.append(scan_position)
-                    self.resource_registry.add(scan_position)  # Add to registry
+            # Dummy resource detection logic
+            for resource in self.resources:
+                if self._distance_to(resource) <= 50 and self._is_facing(resource):
+                    print(f"Resource detected: {resource}")
+                    detected_resources.append(resource)
+                    self.resource_registry.add(resource)
 
-        print(f"Detected resources: {detected_resources}")
         return detected_resources
+    
+    def explore(self):
+        """
+        Explore surroundings using a search pattern and obstacle avoidance.
+        """
+        print("No resources detected. Generating search pattern...")
+        pattern = self.generate_expanding_square_pattern()
+
+        for waypoint in pattern:
+            if waypoint in self.obstacles:
+                print(f"Waypoint {waypoint} blocked by obstacle. Modifying path...")
+                continue  # Skip obstacle or recompute path
+            self.move_to(waypoint)
+            detected_resources = self.perform_360_scan()
+            if detected_resources:
+                print(f"Resources found during exploration: {detected_resources}")
+                break
 
     def search_area(self):
         print("Searching area...")
@@ -75,6 +113,7 @@ class Rover:
         # Generate an expanding square search pattern
         print("No new resources nearby. Continuing expanding square search...")
         pattern = self.generate_expanding_square_pattern()
+        # use from pattern/expanding_square.py?
 
         for waypoint in pattern:
             if waypoint not in self.traveled_path and waypoint not in self.obstacles:
@@ -100,6 +139,33 @@ class Rover:
                 return False
         print("Reached the target.")
         return True
+    
+    def navigate_to_resource(self, resource):
+        """
+        Navigate toward a detected resource and verify it upon arrival.
+        """
+        print(f"Navigating to resource at {resource}...")
+        path = a_star(tuple(self.position), resource, self.obstacles, self.grid_size)
+        if not path:
+            print(f"No valid path to resource at {resource}.")
+            return
+        self.navigate_to(resource)
+
+        # Verify the resource
+        if self.verify_resource(resource):
+            print(f"Resource at {resource} verified.")
+            self.resources.remove(resource)
+
+    def verify_resource(self, resource):
+        """
+        Verify if a resource is within 5 units and in FOV.
+        """
+        if self._distance_to(resource) <= 5 and self._is_facing(resource):
+            if resource not in self.verified_resources:
+                self.verified_resources.append(resource)
+                print(f"Resource verified: {resource}")
+                return True
+        return False
 
     def detect_obstacle_ahead(self):
         next_position = self.path[0] if self.path else self.position
@@ -108,6 +174,36 @@ class Rover:
     def avoid_obstacle(self):
         print("Avoiding obstacle...")
         self.switch_mode('search')
+
+    def _distance_to(self, target):
+        """
+        Calculate the Euclidean distance from the rover's position to a target.
+        """
+        return np.linalg.norm(np.array(target) - self.position)
+
+    def _is_facing(self, target):
+        """
+        Check if the rover is facing the target within its field of view (FOV).
+        """
+        direction_vector = np.array(target) - self.position
+        angle_to_target = math.atan2(direction_vector[1], direction_vector[0])
+        angle_diff = abs((self.heading - angle_to_target + np.pi) % (2 * np.pi) - np.pi)
+        return angle_diff <= self.fov_angle / 2
+
+    def detect_resources(self):
+        """
+        Detect resources within a certain distance and in the rover's field of view (FOV).
+        Returns a list of detected resources.
+        """
+        print("Detecting resources...")
+        detected = []
+        for resource in self.resources:
+            # Check if the resource is within the detection range (50 units) and in the rover's FOV
+            if self._distance_to(resource) <= 50 and self._is_facing(resource):
+                detected.append(resource)
+                self.resource_registry.add(resource)  # Add to registry if detected
+        print(f"Detected resources: {detected}")
+        return detected
 
     def generate_expanding_square_pattern(self):
         print("Generating expanding square search pattern...")
