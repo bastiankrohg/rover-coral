@@ -15,4 +15,6 @@ SINE_WAVE_WAVELENGTH = 20      # Wavelength of the sine wave
 SINE_WAVE_NUM_POINTS = 500     # Number of points in the sine wave
 
 # Visualization Settings
-GRID_SIZE = (50, 50)  # Size of the visualization grid
+# GRID_SIZE = (50, 50)  # Size of the visualization grid
+# Define GRID_SIZE as a tuple of bounds
+GRID_SIZE = ((-50, 50), (-50, 50))  # Grid spans from -50 to 50 in both x and y directions

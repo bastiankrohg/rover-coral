@@ -1,11 +1,17 @@
-# visualization/plotter.py
-
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
 
 class Visualizer:
     def __init__(self, grid_size, obstacles, resources):
+        """
+        Initialize the Visualizer.
+
+        Parameters:
+        - grid_size: Tuple of ((x_min, x_max), (y_min, y_max)) defining the grid bounds.
+        - obstacles: List of obstacle positions.
+        - resources: List of resource positions.
+        """
         self.grid_size = grid_size
         self.obstacles = obstacles
         self.resources = resources
@@ -16,8 +22,13 @@ class Visualizer:
         self.background = None
 
     def _setup_plot(self):
-        self.ax.set_xlim(0, self.grid_size[0])
-        self.ax.set_ylim(0, self.grid_size[1])
+        """
+        Set up the plot with grid lines and static elements.
+        """
+        x_min, x_max = self.grid_size[0]
+        y_min, y_max = self.grid_size[1]
+        self.ax.set_xlim(x_min, x_max)
+        self.ax.set_ylim(y_min, y_max)
         self.ax.set_aspect('equal', adjustable='box')
         self.ax.grid(True)
 
@@ -39,6 +50,11 @@ class Visualizer:
     def update(self, rover_position, traveled_path, search_pattern=None):
         """
         Update the plot with the rover's current position and path.
+
+        Parameters:
+        - rover_position: Current (x, y) position of the rover.
+        - traveled_path: List of (x, y) positions the rover has visited.
+        - search_pattern: Optional list of (x, y) points for search visualization.
         """
         if self.background is None:
             raise RuntimeError("Call initialize_plot() before update().")

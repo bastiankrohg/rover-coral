@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from config.config import (
+from navigation.config.config import (
     REAL_WORLD_SCALE,
     EXPANDING_SQUARE_DISTANCE,
     MAX_SQUARE_SIDE_LENGTH,
@@ -113,6 +113,49 @@ def generate_expanding_square(center=(0, 0), distance=EXPANDING_SQUARE_DISTANCE,
         plt.show()
 
     return path
+
+def generate_expanding_square_waypoints(center, distance=5, max_side_length=6):
+    """
+    Generate waypoints for an expanding square pattern starting from the given center.
+
+    Parameters:
+    - center: The (x, y) starting point of the square.
+    - distance: Distance moved in each straight line segment.
+    - max_side_length: Maximum length of the square sides in multiples of 'distance'.
+
+    Returns:
+    - List of waypoints for the expanding square.
+    """
+    x, y = center
+    waypoints = []
+    current_length = 1
+
+    while current_length <= max_side_length:
+        # Right
+        for _ in range(current_length):
+            x += distance
+        waypoints.append((x, y))
+
+        # Up
+        for _ in range(current_length):
+            y += distance
+        waypoints.append((x, y))
+
+        current_length += 1
+
+        # Left
+        for _ in range(current_length):
+            x -= distance
+        waypoints.append((x, y))
+
+        # Down
+        for _ in range(current_length):
+            y -= distance
+        waypoints.append((x, y))
+
+        current_length += 1
+
+    return waypoints
 
 
 def test_path_generators():

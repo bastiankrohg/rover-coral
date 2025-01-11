@@ -140,6 +140,38 @@ class Rover:
         print("Reached the target.")
         return True
     
+    def navigate_to_waypoints(self, waypoints, threshold=1.0):
+        """
+        Navigate to a series of waypoints with a completion threshold.
+
+        Parameters:
+        - waypoints: List of (x, y) waypoints to navigate to.
+        - threshold: Distance within which the waypoint is considered reached.
+        """
+        for waypoint in waypoints:
+            print(f"Navigating to waypoint: {waypoint}")
+
+            # Check if already within the threshold distance
+            if self._distance_to(waypoint) <= threshold:
+                print(f"Waypoint {waypoint} already reached (within {threshold} units).")
+                continue
+
+            # Calculate path using A*
+            path = a_star(tuple(self.position), waypoint, self.obstacles, self.grid_size)
+
+            if not path:
+                print(f"Unable to find a path to waypoint {waypoint}. Skipping.")
+                continue
+
+            # Move along the calculated path
+            for step in path:
+                self.move_to(step)
+                if self._distance_to(waypoint) <= threshold:
+                    print(f"Waypoint {waypoint} reached (within {threshold} units).")
+                    break
+
+            print(f"Arrived at waypoint: {waypoint}")
+    
     def navigate_to_resource(self, resource):
         """
         Navigate toward a detected resource and verify it upon arrival.
@@ -177,9 +209,16 @@ class Rover:
 
     def _distance_to(self, target):
         """
-        Calculate the Euclidean distance from the rover's position to a target.
+        Calculate Euclidean distance to a target point.
+
+        Parameters:
+        - target: (x, y) coordinates of the target point.
+
+        Returns:
+        - Distance to the target point.
         """
-        return np.linalg.norm(np.array(target) - self.position)
+        target_position = np.array(target, dtype='float64')
+        return np.linalg.norm(self.position - target_position)
 
     def _is_facing(self, target):
         """
@@ -232,10 +271,23 @@ class Rover:
         print(f"Expanding square pattern: {pattern}")
         return pattern
 
+#    def is_within_bounds(self, position):
+#        x, y = position
+#        return 0 <= x < self.grid_size[0] and 0 <= y < self.grid_size[1]
+
     def is_within_bounds(self, position):
-        x, y = position
-        return 0 <= x < self.grid_size[0] and 0 <= y < self.grid_size[1]
-    
+        """
+        Check if the given position is within the grid boundaries.
+        
+        Parameters:
+        - position: The (x, y) position to check, can be a tuple or numpy array.
+
+        Returns:
+        - True if the position is within bounds, False otherwise.
+        """
+        x, y = map(int, tuple(position))  # Ensure position is a tuple of integers
+        return self.grid_size[0][0] <= x < self.grid_size[0][1] and self.grid_size[1][0] <= y < self.grid_size[1][1]
+
     def is_collision(self, position):
         """
         Check if the given position collides with an obstacle.

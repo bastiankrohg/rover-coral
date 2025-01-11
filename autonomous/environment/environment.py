@@ -1,3 +1,43 @@
+import numpy as np
+
+class OccupancyEnvironment: # with occupancy mapping
+    def __init__(self, grid_size, obstacles, resources):
+        self.grid_size = self._normalize_grid_size(grid_size)
+        self.resources = resources
+        self.occupancy_map = self._create_occupancy_map(obstacles)
+
+    def _normalize_grid_size(self, grid_size):
+        """
+        Normalize grid_size to ensure it's a tuple of bounds.
+        If an integer is provided, convert it to ((-size, size), (-size, size)).
+        """
+        if isinstance(grid_size, int):
+            return ((-grid_size, grid_size), (-grid_size, grid_size))
+        return grid_size
+
+    def _create_occupancy_map(self, obstacles):
+        """
+        Create a 2D occupancy map for the grid.
+
+        Parameters:
+        - obstacles: List of (x, y) positions representing obstacles.
+
+        Returns:
+        - 2D numpy array where 1 indicates an obstacle and 0 indicates free space.
+        """
+        x_min, x_max = self.grid_size[0]
+        y_min, y_max = self.grid_size[1]
+
+        map_width = x_max - x_min + 1
+        map_height = y_max - y_min + 1
+        occupancy_map = np.zeros((map_width, map_height), dtype=int)
+
+        for x, y in obstacles:
+            if x_min <= x <= x_max and y_min <= y <= y_max:
+                occupancy_map[x - x_min, y - y_min] = 1  # Mark as occupied
+
+        return occupancy_map
+
 class Environment:
     def __init__(self, grid_size, obstacles, resources, start_position):
         """
@@ -50,3 +90,5 @@ class Environment:
         """
         if self.is_position_valid(position):
             self.obstacles.add(position)
+
+

@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import time
-from path_generator import generate_sine_wave, generate_expanding_square
+from navigation.path_generator import generate_sine_wave, generate_expanding_square
 
 
 class PathFollower:
