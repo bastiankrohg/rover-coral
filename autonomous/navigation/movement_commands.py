@@ -2,24 +2,29 @@ import numpy as np
 import math
 from commands import Command
 
-def generate_movement_commands(path, nominal_speed=1.0):
+def generate_movement_commands(path):
     """
-    Generate movement commands (heading, speed) from the path.
-
-    Parameters:
-    - path: List of (x, y) points representing the path.
-    - nominal_speed: Speed for each segment.
-
-    Returns:
-    - List of (heading, speed) tuples.
+    Generate movement commands (heading and speed) for the given path.
     """
     commands = []
-    for i in range(1, len(path)):
-        direction = np.array(path[i]) - np.array(path[i - 1])
-        heading = np.arctan2(direction[1], direction[0])
-        commands.append((heading, nominal_speed))
-    return commands
+    for i in range(len(path) - 1):
+        start = np.array(path[i])
+        end = np.array(path[i + 1])
+        direction = end - start
+        distance = np.linalg.norm(direction)
+        if distance == 0:
+            continue  # Skip if the rover is already at the target
 
+        heading = np.arctan2(direction[1], direction[0])
+        speed = 1.0  # Example constant speed
+
+        # Validate outputs
+        if isinstance(heading, (int, float)) and isinstance(speed, (int, float)):
+            commands.append((heading, speed))
+        else:
+            print(f"Invalid command: heading={heading}, speed={speed}")
+
+    return commands
 
 def calculate_commands(current_position, current_heading, waypoints):
     """

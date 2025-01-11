@@ -43,13 +43,17 @@ class PathFollower:
 
         print("Path following complete.")
 
-    def visualize(self):
+    def visualize(self, obstacles=None):
         """
-        Visualizes the path and the current position of the rover.
+        Visualizes the path, the current position of the rover, and obstacles.
+
+        Parameters:
+        - obstacles (list of tuples): List of obstacle coordinates to plot.
         """
         plt.clf()
-        plt.xlim(-self.grid_size[0] // 2, self.grid_size[0] // 2)
-        plt.ylim(-self.grid_size[1] // 2, self.grid_size[1] // 2)
+        center_x, center_y = self.current_position
+        plt.xlim(center_x - 10, center_x + 10)
+        plt.ylim(center_y - 10, center_y + 10)
         plt.grid(True)
 
         # Plot the path
@@ -64,9 +68,14 @@ class PathFollower:
         # Plot current position
         plt.plot(self.current_position[0], self.current_position[1], "ro", label="Rover")
 
+        # Plot obstacles
+        if obstacles:
+            ox, oy = zip(*obstacles)
+            plt.scatter(ox, oy, color="red", label="Obstacles")
+
         plt.legend()
         plt.pause(0.01)
-
+ 
     def pure_pursuit(self):
         """
         Locate the next look-ahead point on the path.
@@ -97,6 +106,84 @@ class PathFollower:
                 time.sleep(pause)
 
         print("Path following complete.")
+
+    def move_with_pure_pursuit_obstacle_avoidance(
+            self, speed=1.0, pause=0.1, obstacle_positions=None, detection_radius=1.5, replan_function=None
+        ):
+        """
+        Moves the rover along the path using the pure pursuit algorithm with obstacle avoidance.
+
+        Parameters:
+        - speed (float): Movement speed.
+        - pause (float): Pause between updates (for visualization).
+        - obstacle_positions (list of tuples): List of obstacle coordinates.
+        - detection_radius (float): Radius to detect obstacles.
+        - replan_function (callable): Function to replan path. Takes (current_position, target, obstacles).
+
+        Returns:
+        - None
+        """
+        print("Starting pure pursuit with obstacle avoidance...")
+
+        for waypoint in self.path:
+            while True:
+                # Check for obstacles
+                if obstacle_positions and self.obstacle_detected(obstacle_positions, detection_radius):
+                    print(f"Obstacle detected near {self.current_position}. Replanning...")
+                    self.visualize(obstacles=obstacle_positions)  # Visualize obstacles dynamically
+
+                    if replan_function:
+                        new_path = replan_function(tuple(self.current_position), waypoint, obstacle_positions)
+                        if new_path:
+                            print(f"Replanned path: {new_path}")
+                            self.path = new_path + self.path[self.path.index(waypoint) + 1:]
+                            break  # Replan for current waypoint
+                        else:
+                            print(f"Failed to replan from {self.current_position} to {waypoint}. Trying next waypoint...")
+                            break  # Skip current waypoint if replanning fails
+
+                # Move towards waypoint
+                direction = np.array(waypoint) - self.current_position
+                distance = np.linalg.norm(direction)
+
+                if distance <= self.look_ahead_distance:
+                    print(f"Waypoint {waypoint} reached.")
+                    break  # Reached the waypoint
+
+                step = direction / distance * speed
+                self.current_position += step
+                self.traveled_path.append(tuple(self.current_position))
+                self.visualize(obstacles=obstacle_positions)
+                time.sleep(pause)
+
+        print("Path following with obstacle avoidance complete.")
+
+    def move_with_pure_pursuit_and_commands(self, speed=1.0, pause=0.1):
+        """
+        Move along the path using Pure Pursuit while emitting commands.
+        """
+        print("Starting Pure Pursuit with command output...")
+        for waypoint in self.path:
+            direction = np.array(waypoint) - self.current_position
+            distance = np.linalg.norm(direction)
+            
+            if distance > 0:
+                step = direction / distance * speed
+
+                while np.linalg.norm(direction) > np.linalg.norm(step):
+                    self.current_position += step
+                    command = f"Move forward by {np.linalg.norm(step):.2f} meters"
+                    print(command)
+                    self.visualize()
+                    time.sleep(pause)
+                    direction = np.array(waypoint) - self.current_position
+
+                turn_angle = np.degrees(np.arctan2(direction[1], direction[0]))
+                print(f"Turn to heading {turn_angle:.2f}°")
+                self.current_position = np.array(waypoint)
+                self.visualize()
+
+        print("Path following with commands complete.")
 
     def generate_and_execute_commands(self):
         """
@@ -134,6 +221,54 @@ class PathFollower:
 
     def turn(self, angle):
         self.current_heading = (self.current_heading + angle) % (2 * math.pi)
+
+    def check_for_resource(self):
+        """
+        Simulate resource detection (placeholder for actual detection logic).
+        """
+        # Example condition for detecting a resource
+        if np.random.random() < 0.1:  # 10% chance per step
+            print("Resource detected! Stopping search.")
+            return True
+        return False
+
+    def move_with_resource_check(self, speed=1.0, pause=0.1):
+        """
+        Move along the path and stop if a resource is detected.
+        """
+        print("Starting Pure Pursuit with resource check...")
+        for waypoint in self.path:
+            direction = np.array(waypoint) - self.current_position
+            distance = np.linalg.norm(direction)
+
+            while distance > 0:
+                if self.check_for_resource():
+                    return
+                step = direction / distance * speed
+                self.current_position += step
+                self.visualize()
+                time.sleep(pause)
+                direction = np.array(waypoint) - self.current_position
+                distance = np.linalg.norm(direction)
+        print("Path following complete.")    
+
+    def obstacle_detected(self, obstacle_positions, detection_radius=1.0):
+        """
+        Checks if there is an obstacle within the detection radius of the rover's current position.
+
+        Parameters:
+        - obstacle_positions (list of tuples): List of (x, y) coordinates of obstacles.
+        - detection_radius (float): Radius within which obstacles are considered detected.
+
+        Returns:
+        - bool: True if an obstacle is detected, False otherwise.
+        """
+        for obstacle in obstacle_positions:
+            distance = np.linalg.norm(np.array(obstacle) - self.current_position)
+            if distance <= detection_radius:
+                print(f"Obstacle detected at {obstacle}, distance: {distance:.2f}")
+                return True
+        return False    
 
 def test_path_follower_with_commands():
     """
