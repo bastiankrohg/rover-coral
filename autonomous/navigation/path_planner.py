@@ -20,7 +20,7 @@ def generate_paths_for_waypoints(waypoints, obstacles, grid_size):
         print(f"Generating path from {start} to {goal}...")
 
         #path = a_star(start, goal, obstacles, grid_size)
-        path = a_star_bis(start, goal, obstacles, grid_size)
+        path = a_star(start, goal, obstacles, grid_size)
         if not path:
             print(f"Path from {start} to {goal} is blocked. Skipping.")
             continue

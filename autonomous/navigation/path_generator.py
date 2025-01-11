@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from navigation.config.config import (
+from scipy.interpolate import splprep, splev
+
+from config.config import (
     REAL_WORLD_SCALE,
     EXPANDING_SQUARE_DISTANCE,
     MAX_SQUARE_SIDE_LENGTH,
@@ -177,6 +179,22 @@ def test_path_generators():
     total_distance = calculate_path_distance(expanding_square, scale=REAL_WORLD_SCALE)
     print(f"Total distance of expanding square: {total_distance:.2f} meters")
 
+def smooth_path_with_bezier(waypoints, num_points=100):
+    """
+    Smooth the given waypoints using Bezier curves.
+
+    Parameters:
+    - waypoints: List of (x, y) waypoints.
+    - num_points: Number of interpolated points for the smooth path.
+
+    Returns:
+    - List of (x, y) tuples representing the smoothed path.
+    """
+    waypoints = np.array(waypoints)
+    tck, _ = splprep([waypoints[:, 0], waypoints[:, 1]], s=0)
+    u = np.linspace(0, 1, num_points)
+    smooth_path = splev(u, tck)
+    return list(zip(smooth_path[0], smooth_path[1]))
 
 if __name__ == "__main__":
     test_path_generators()

@@ -1,15 +1,17 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import time
-from navigation.path_generator import generate_sine_wave, generate_expanding_square
+from path_generator import generate_sine_wave, generate_expanding_square
 
 
 class PathFollower:
-    def __init__(self, path, grid_size=(50, 50)):
+    def __init__(self, path, look_ahead_distance=2.0, grid_size=(50, 50)):
         self.path = path
         self.current_position = np.array(path[0], dtype="float64")
         self.grid_size = grid_size
         self.traveled_path = [tuple(self.current_position)]
+        self.look_ahead_distance = look_ahead_distance
+        self.current_index = 0
 
     def move_along_path(self, speed=1.0, pause=0.1):
         """
@@ -60,6 +62,39 @@ class PathFollower:
 
         plt.legend()
         plt.pause(0.01)
+
+    def pure_pursuit(self):
+        """
+        Locate the next look-ahead point on the path.
+        """
+        for i in range(self.current_index, len(self.path)):
+            point = np.array(self.path[i], dtype="float64")
+            distance = np.linalg.norm(point - self.current_position)
+            if distance >= self.look_ahead_distance:
+                self.current_index = i
+                return point
+        return np.array(self.path[-1], dtype="float64")  # Final point if no valid look-ahead
+
+    def move_with_pure_pursuit(self, speed=1.0, pause=0.1):
+        """
+        Follow the path using Pure Pursuit.
+        """
+        print("Following path with Pure Pursuit...")
+        while self.current_index < len(self.path) - 1:
+            target_point = self.pure_pursuit()
+            direction = target_point - self.current_position
+            distance = np.linalg.norm(direction)
+
+            if distance > 0:
+                step = direction / distance * speed
+                self.current_position += step
+                self.traveled_path.append(tuple(self.current_position))
+                self.visualize()
+                time.sleep(pause)
+
+        print("Path following complete.")
+
+
 
 
 def test_path_follower():
