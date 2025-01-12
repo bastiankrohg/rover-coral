@@ -108,8 +108,8 @@ class PathFollower:
         print("Path following complete.")
 
     def move_with_pure_pursuit_obstacle_avoidance(
-        self, speed=1.0, pause=0.1, obstacle_positions=None, detection_radius=1.5, replan_function=None, grid_size=(50, 50)
-    ):
+    self, speed=1.0, pause=0.1, obstacle_positions=None, detection_radius=1.5, grid_size=(50, 50)
+):
         """
         Moves the rover along the path using the pure pursuit algorithm with obstacle avoidance.
 
@@ -118,40 +118,56 @@ class PathFollower:
         - pause (float): Pause between updates (for visualization).
         - obstacle_positions (list of tuples): List of obstacle coordinates.
         - detection_radius (float): Radius to detect obstacles.
-        - replan_function (callable): Function to replan path. Takes (current_position, target, obstacles, grid_size).
         - grid_size (tuple): The size of the grid as (width, height).
 
         Returns:
         - None
         """
-        print("Starting pure pursuit with obstacle avoidance...")
+        print("Starting pure pursuit with simple obstacle avoidance...")
 
         for waypoint in self.path:
             while True:
                 # Check for obstacles
                 if obstacle_positions and self.obstacle_detected(obstacle_positions, detection_radius):
-                    print(f"Obstacle detected near {self.current_position}. Replanning...")
-                    self.visualize(obstacles=obstacle_positions)  # Visualize obstacles dynamically
+                    print(f"Obstacle detected near {self.current_position}. Avoiding...")
+                    self.visualize(obstacles=obstacle_positions)
 
-                    if replan_function:
-                        new_path = replan_function(
-                            tuple(self.current_position), waypoint, obstacle_positions, grid_size
-                        )
-                        if new_path:
-                            print(f"Replanned path: {new_path}")
-                            self.path = new_path + self.path[self.path.index(waypoint) + 1:]
-                            break  # Replan for current waypoint
-                        else:
-                            print(f"Failed to replan from {self.current_position} to {waypoint}. Trying next waypoint...")
-                            break  # Skip current waypoint if replanning fails
+                    # Move perpendicular to the path to avoid the obstacle
+                    direction_to_waypoint = np.array(waypoint) - self.current_position
+                    perpendicular_direction = np.array([-direction_to_waypoint[1], direction_to_waypoint[0]])
+                    perpendicular_direction /= np.linalg.norm(perpendicular_direction)
 
-                # Move towards waypoint
+                    # Temporarily move away from the path
+                    for _ in range(5):  # Move a few steps perpendicular to the path
+                        self.current_position += perpendicular_direction * speed
+                        self.traveled_path.append(tuple(self.current_position))
+                        self.visualize(obstacles=obstacle_positions)
+                        time.sleep(pause)
+
+                    # Attempt to rejoin the path
+                    while True:
+                        direction_to_waypoint = np.array(waypoint) - self.current_position
+                        distance_to_waypoint = np.linalg.norm(direction_to_waypoint)
+
+                        if distance_to_waypoint <= self.look_ahead_distance:
+                            print(f"Waypoint {waypoint} reached after avoiding obstacle.")
+                            break
+
+                        step = direction_to_waypoint / distance_to_waypoint * speed
+                        self.current_position += step
+                        self.traveled_path.append(tuple(self.current_position))
+                        self.visualize(obstacles=obstacle_positions)
+                        time.sleep(pause)
+
+                    break  # Continue to the next waypoint
+
+                # Move towards waypoint if no obstacle is detected
                 direction = np.array(waypoint) - self.current_position
                 distance = np.linalg.norm(direction)
 
                 if distance <= self.look_ahead_distance:
                     print(f"Waypoint {waypoint} reached.")
-                    break  # Reached the waypoint
+                    break
 
                 step = direction / distance * speed
                 self.current_position += step

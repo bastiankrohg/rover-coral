@@ -101,7 +101,6 @@ def test_workflow_with_obstacle_avoidance(use_bezier=False, generate_commands=Tr
         pause=0.1, 
         obstacle_positions=obstacles, 
         detection_radius=2.0, 
-        replan_function=a_star,
         grid_size=(50, 50)
     )
     print("Path following with obstacle avoidance complete.")
