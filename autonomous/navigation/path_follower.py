@@ -45,7 +45,7 @@ class PathFollower:
 
     def visualize(self, obstacles=None, target_point=None):
         """
-        Visualizes the path, the current position of the rover, obstacles, and target navigation points.
+        Visualizes the path, the current position of the rover, obstacles, and directional indicators.
 
         Parameters:
         - obstacles (list of tuples): List of obstacle coordinates to plot.
@@ -69,6 +69,21 @@ class PathFollower:
         # Highlight the current target point
         if target_point:
             plt.scatter(target_point[0], target_point[1], color="orange", s=100, label="Target Point", edgecolors="black")
+
+            # Draw arrow from the rover to the target point
+            dx = target_point[0] - self.current_position[0]
+            dy = target_point[1] - self.current_position[1]
+            plt.arrow(
+                self.current_position[0],
+                self.current_position[1],
+                dx,
+                dy,
+                head_width=0.5,
+                head_length=0.7,
+                fc="green",
+                ec="green",
+                label="Heading Arrow"
+            )
 
         # Plot current position
         plt.plot(self.current_position[0], self.current_position[1], "ro", label="Rover")
