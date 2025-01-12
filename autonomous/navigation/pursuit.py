@@ -96,14 +96,22 @@ def test_workflow_with_obstacle_avoidance(use_bezier=False, generate_commands=Tr
     print("\nStarting path following with obstacle avoidance...")
     follower = PathFollower(smoothed_path, look_ahead_distance=2.0)
     obstacles = [(10, 10), (5, -5)]  # Example obstacle positions
-    follower.move_with_pure_pursuit_obstacle_avoidance(
-    #follower.move_with_optimized_pure_pursuit_obstacle_avoidance(
+    #follower.move_with_pure_pursuit_obstacle_avoidance(
+    #    speed=1.0, 
+    #    pause=0.1, 
+    #    obstacle_positions=obstacles, 
+    #    detection_radius=2.0, 
+    #    grid_size=(50, 50)
+    #)
+    follower.move_with_pure_pursuit_safe_navigation(
         speed=1.0, 
         pause=0.1, 
         obstacle_positions=obstacles, 
         detection_radius=2.0, 
+        safety_margin=2.5,  # Example safety margin
         grid_size=(50, 50)
     )
+
     print("Path following with obstacle avoidance complete.")
 
     # Step 4: Generate Movement Commands

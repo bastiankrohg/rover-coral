@@ -225,6 +225,104 @@ class PathFollower:
 
         print("Path following with obstacle avoidance complete.")
 
+    def move_with_pure_pursuit_safe_navigation(
+    self, speed=1.0, pause=0.1, obstacle_positions=None, detection_radius=1.5, safety_margin=2.5, grid_size=(50, 50)
+):
+        """
+        Moves the rover along the path using pure pursuit with safe navigation zones.
+
+        Parameters:
+        - speed (float): Movement speed.
+        - pause (float): Pause between updates (for visualization).
+        - obstacle_positions (list of tuples): List of obstacle coordinates.
+        - detection_radius (float): Radius to detect obstacles.
+        - safety_margin (float): Minimum distance from obstacles within which waypoints are inadmissible.
+        - grid_size (tuple): The size of the grid as (width, height).
+
+        Returns:
+        - None
+        """
+        print("Starting pure pursuit with safe navigation...")
+
+        for waypoint in self.path:
+            print(f"\nChecking waypoint: {waypoint}")
+
+            # Skip inadmissible waypoints within safety margin
+            if obstacle_positions:
+                is_admissible = True
+                for obstacle in obstacle_positions:
+                    distance_to_obstacle = np.linalg.norm(np.array(waypoint) - np.array(obstacle))
+                    print(f"  Obstacle at {obstacle}, distance to waypoint: {distance_to_obstacle:.2f}")
+                    if distance_to_obstacle <= safety_margin:
+                        print(f"  Waypoint {waypoint} is too close to obstacle at {obstacle} (within safety margin: {safety_margin}). Skipping.")
+                        is_admissible = False
+                        break
+                if not is_admissible:
+                    continue  # Skip further processing for this waypoint
+
+            while True:
+                # Check for obstacles during movement
+                if obstacle_positions and self.obstacle_detected(obstacle_positions, detection_radius):
+                    print(f"Obstacle detected near {self.current_position}. Avoiding...")
+                    self.visualize(obstacles=obstacle_positions, target_point=waypoint)
+
+                    # Move perpendicular to avoid obstacle
+                    direction_to_waypoint = np.array(waypoint) - self.current_position
+                    perpendicular_direction = np.array([-direction_to_waypoint[1], direction_to_waypoint[0]])
+                    perpendicular_direction /= np.linalg.norm(perpendicular_direction)
+
+                    # Temporarily move away from the path
+                    for _ in range(5):  # Move a few steps perpendicular to the path
+                        self.current_position += perpendicular_direction * speed
+                        self.traveled_path.append(tuple(self.current_position))
+                        self.visualize(obstacles=obstacle_positions, target_point=waypoint)
+                        time.sleep(pause)
+
+                    # Attempt to rejoin path, reevaluating waypoint admissibility
+                    while True:
+                        direction_to_waypoint = np.array(waypoint) - self.current_position
+                        distance_to_waypoint = np.linalg.norm(direction_to_waypoint)
+
+                        # Reevaluate admissibility of waypoint after avoidance
+                        if obstacle_positions:
+                            waypoint_safe = True
+                            for obstacle in obstacle_positions:
+                                dist_to_obstacle = np.linalg.norm(np.array(waypoint) - np.array(obstacle))
+                                if dist_to_obstacle <= safety_margin:
+                                    print(f"  Waypoint {waypoint} is still too close to obstacle at {obstacle} after avoidance. Skipping.")
+                                    waypoint_safe = False
+                                    break
+                            if not waypoint_safe:
+                                break  # Skip this waypoint and continue to the next
+
+                        if distance_to_waypoint <= self.look_ahead_distance:
+                            print(f"Waypoint {waypoint} reached after avoiding obstacle.")
+                            break
+
+                        step = direction_to_waypoint / distance_to_waypoint * speed
+                        self.current_position += step
+                        self.traveled_path.append(tuple(self.current_position))
+                        self.visualize(obstacles=obstacle_positions, target_point=waypoint)
+                        time.sleep(pause)
+
+                    break  # Continue to the next waypoint
+
+                # Move towards waypoint if no obstacle is detected
+                direction = np.array(waypoint) - self.current_position
+                distance = np.linalg.norm(direction)
+
+                if distance <= self.look_ahead_distance:
+                    print(f"Waypoint {waypoint} reached.")
+                    break
+
+                step = direction / distance * speed
+                self.current_position += step
+                self.traveled_path.append(tuple(self.current_position))
+                self.visualize(obstacles=obstacle_positions, target_point=waypoint)
+                time.sleep(pause)
+
+        print("Path following with safe navigation complete.")
+
     def move_with_optimized_pure_pursuit_obstacle_avoidance(
     self, speed=1.0, pause=0.1, obstacle_positions=None, detection_radius=1.5
 ):
