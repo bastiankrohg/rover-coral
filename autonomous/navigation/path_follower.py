@@ -43,12 +43,13 @@ class PathFollower:
 
         print("Path following complete.")
 
-    def visualize(self, obstacles=None):
+    def visualize(self, obstacles=None, target_point=None):
         """
-        Visualizes the path, the current position of the rover, and obstacles.
+        Visualizes the path, the current position of the rover, obstacles, and target navigation points.
 
         Parameters:
         - obstacles (list of tuples): List of obstacle coordinates to plot.
+        - target_point (tuple): The current navigation target point to highlight.
         """
         plt.clf()
         center_x, center_y = self.current_position
@@ -60,10 +61,14 @@ class PathFollower:
         x, y = zip(*self.path)
         plt.plot(x, y, linestyle="--", color="gray", label="Path")
 
-        # Plot traveled path
+        # Plot the trace of where the rover has been
         if self.traveled_path:
             tx, ty = zip(*self.traveled_path)
-            plt.plot(tx, ty, color="blue", label="Traveled Path")
+            plt.plot(tx, ty, color="blue", linewidth=1.5, label="Traveled Path")
+
+        # Highlight the current target point
+        if target_point:
+            plt.scatter(target_point[0], target_point[1], color="orange", s=100, label="Target Point", edgecolors="black")
 
         # Plot current position
         plt.plot(self.current_position[0], self.current_position[1], "ro", label="Rover")
@@ -107,6 +112,33 @@ class PathFollower:
 
         print("Path following complete.")
 
+    def move_with_pure_pursuit_and_commands(self, speed=1.0, pause=0.1):
+        """
+        Move along the path using Pure Pursuit while emitting commands.
+        """
+        print("Starting Pure Pursuit with command output...")
+        for waypoint in self.path:
+            direction = np.array(waypoint) - self.current_position
+            distance = np.linalg.norm(direction)
+            
+            if distance > 0:
+                step = direction / distance * speed
+
+                while np.linalg.norm(direction) > np.linalg.norm(step):
+                    self.current_position += step
+                    command = f"Move forward by {np.linalg.norm(step):.2f} meters"
+                    print(command)
+                    self.visualize()
+                    time.sleep(pause)
+                    direction = np.array(waypoint) - self.current_position
+
+                turn_angle = np.degrees(np.arctan2(direction[1], direction[0]))
+                print(f"Turn to heading {turn_angle:.2f}°")
+                self.current_position = np.array(waypoint)
+                self.visualize()
+
+        print("Path following with commands complete.")
+
     def move_with_pure_pursuit_obstacle_avoidance(
     self, speed=1.0, pause=0.1, obstacle_positions=None, detection_radius=1.5, grid_size=(50, 50)
 ):
@@ -130,7 +162,7 @@ class PathFollower:
                 # Check for obstacles
                 if obstacle_positions and self.obstacle_detected(obstacle_positions, detection_radius):
                     print(f"Obstacle detected near {self.current_position}. Avoiding...")
-                    self.visualize(obstacles=obstacle_positions)
+                    self.visualize(obstacles=obstacle_positions, target_point=waypoint)
 
                     # Move perpendicular to the path to avoid the obstacle
                     direction_to_waypoint = np.array(waypoint) - self.current_position
@@ -141,7 +173,8 @@ class PathFollower:
                     for _ in range(5):  # Move a few steps perpendicular to the path
                         self.current_position += perpendicular_direction * speed
                         self.traveled_path.append(tuple(self.current_position))
-                        self.visualize(obstacles=obstacle_positions)
+                        self.visualize(obstacles=obstacle_positions, target_point=waypoint)
+                        #self.visualize(obstacles=obstacle_positions)
                         time.sleep(pause)
 
                     # Attempt to rejoin the path
@@ -176,33 +209,65 @@ class PathFollower:
                 time.sleep(pause)
 
         print("Path following with obstacle avoidance complete.")
-        
-    def move_with_pure_pursuit_and_commands(self, speed=1.0, pause=0.1):
+
+    def move_with_optimized_pure_pursuit_obstacle_avoidance(
+    self, speed=1.0, pause=0.1, obstacle_positions=None, detection_radius=1.5
+):
         """
-        Move along the path using Pure Pursuit while emitting commands.
+        Moves the rover along the path using an optimized pure pursuit algorithm with obstacle avoidance.
+
+        Parameters:
+        - speed (float): Movement speed.
+        - pause (float): Pause between updates (for visualization).
+        - obstacle_positions (list of tuples): List of obstacle coordinates.
+        - detection_radius (float): Radius to detect obstacles.
+
+        Returns:
+        - None
         """
-        print("Starting Pure Pursuit with command output...")
+        print("Starting optimized pure pursuit with obstacle avoidance...")
+
         for waypoint in self.path:
-            direction = np.array(waypoint) - self.current_position
-            distance = np.linalg.norm(direction)
-            
-            if distance > 0:
+            while True:
+                # Check for obstacles
+                if obstacle_positions and self.obstacle_detected(obstacle_positions, detection_radius):
+                    print(f"Obstacle detected near {self.current_position}. Optimizing avoidance...")
+                    self.visualize(obstacles=obstacle_positions)
+
+                    # Calculate avoidance direction
+                    direction_to_waypoint = np.array(waypoint) - self.current_position
+                    angle_to_avoid = np.arctan2(-direction_to_waypoint[1], direction_to_waypoint[0])
+                    avoidance_direction = np.array([np.cos(angle_to_avoid), np.sin(angle_to_avoid)])
+
+                    # Move around the obstacle
+                    for _ in range(10):  # Adjust step count based on obstacle size
+                        self.current_position += avoidance_direction * speed
+                        self.traveled_path.append(tuple(self.current_position))
+                        self.visualize(obstacles=obstacle_positions)
+                        time.sleep(pause)
+
+                    # Rejoin the path at a point further along
+                    rejoin_index = min(self.current_index + 5, len(self.path) - 1)  # Look 5 steps ahead
+                    rejoin_point = np.array(self.path[rejoin_index])
+                    print(f"Rejoining path at {rejoin_point}")
+                    waypoint = tuple(rejoin_point)  # Update the waypoint to the rejoin point
+
+                # Move towards the waypoint
+                direction = np.array(waypoint) - self.current_position
+                distance = np.linalg.norm(direction)
+
+                if distance <= self.look_ahead_distance:
+                    print(f"Waypoint {waypoint} reached.")
+                    break  # Reached the waypoint
+
                 step = direction / distance * speed
+                self.current_position += step
+                self.traveled_path.append(tuple(self.current_position))
+                self.visualize(obstacles=obstacle_positions)
+                time.sleep(pause)
 
-                while np.linalg.norm(direction) > np.linalg.norm(step):
-                    self.current_position += step
-                    command = f"Move forward by {np.linalg.norm(step):.2f} meters"
-                    print(command)
-                    self.visualize()
-                    time.sleep(pause)
-                    direction = np.array(waypoint) - self.current_position
+        print("Optimized path following with obstacle avoidance complete.")
 
-                turn_angle = np.degrees(np.arctan2(direction[1], direction[0]))
-                print(f"Turn to heading {turn_angle:.2f}°")
-                self.current_position = np.array(waypoint)
-                self.visualize()
-
-        print("Path following with commands complete.")
 
     def generate_and_execute_commands(self):
         """

@@ -97,6 +97,7 @@ def test_workflow_with_obstacle_avoidance(use_bezier=False, generate_commands=Tr
     follower = PathFollower(smoothed_path, look_ahead_distance=2.0)
     obstacles = [(10, 10), (5, -5)]  # Example obstacle positions
     follower.move_with_pure_pursuit_obstacle_avoidance(
+    #follower.move_with_optimized_pure_pursuit_obstacle_avoidance(
         speed=1.0, 
         pause=0.1, 
         obstacle_positions=obstacles, 
